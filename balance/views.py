@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import jsonify, request
 
 from . import app
 from .models import DBManager
@@ -19,13 +19,13 @@ IMPORTANTE versionar los endpoints (son un contrato)
 """
 
 RUTA = app.config.get("RUTA")
+db = DBManager(RUTA)
 
 @app.route("/api/v1/movimientos")
 def listar_movimientos():
     try:
-        db = DBManager(RUTA)
         sql = "SELECT * from movimientos ORDER BY fecha, id"
-        movimientos = db.consultaSQL(sql)
+        movimientos = db.consulta_SQL(sql)
         resultado = {
             "status": "success",
             "results": movimientos
@@ -34,6 +34,27 @@ def listar_movimientos():
         resultado = {
             "status": "error",
             "message": str(error)
+        }
+
+    return jsonify(resultado)
+
+@app.route('/api/v1/movimientos', methods=['POST'])
+def insertar_movimiento():
+    try:
+        sql = "INSERT INTO movimientos (fecha, concepto, tipo, cantidad) VALUES (:fecha, :concepto, :tipo, :cantidad)"
+        ha_ido_bien = db.consulta_con_parametros(sql, request.json)
+        if ha_ido_bien: {
+            "status": "success"
+        }
+        else:
+            resultado = {
+                "status": "error",
+                "message": "Error al inserta el movimiento en la base de datos "
+            }
+    except Exception as error:
+        resultado = {
+            "status": "success",
+            "results": str(error)
         }
 
     return jsonify(resultado)
